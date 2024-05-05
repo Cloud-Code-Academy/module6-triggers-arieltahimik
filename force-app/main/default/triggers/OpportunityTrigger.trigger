@@ -35,8 +35,8 @@ trigger OpportunityTrigger on Opportunity (before delete, before update) {
         }
 
         Map<Id, Contact> conIdMap = new Map<Id, Contact>();
-        for (Contact contact : [SELECT Id, AccountId FROM Contact WHERE AccountId IN :accIds AND Title = 'CEO']) {
-            conIdMap.put(contact.AccountId, contact);
+        for (Contact con : [SELECT Id, AccountId FROM Contact WHERE AccountId IN :accIds AND Title = 'CEO']) {
+            conIdMap.put(con.AccountId, con);
         }
         
         for (Opportunity opp : Trigger.new) {
