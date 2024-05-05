@@ -1,13 +1,5 @@
-trigger OpportunityTrigger on Opportunity (before update, after update, before delete, after delete) {
-    if (Trigger.isBefore && Trigger.isUpdate) {
-        // Question 5 solution
-        for (Opportunity opp : Trigger.new) {
-            if (opp.Amount < 5000) {                
-                opp.addError('Opportunity amount must be greater than 5000');
-            }
-        }
-    } else if (Trigger.isBefore && Trigger.isDelete) {
-
+trigger OpportunityTrigger on Opportunity (before delete, before update) {
+    if (Trigger.isBefore && Trigger.isDelete) {
         // Question 6 solution               
         Set<Id> accIds = new Set<Id>();
         for (Opportunity opp : Trigger.old) {
@@ -27,4 +19,31 @@ trigger OpportunityTrigger on Opportunity (before update, after update, before d
             }
         }
     }
+
+    if (Trigger.isBefore && Trigger.isUpdate) {
+        // Question 5 solution
+        for (Opportunity opp : Trigger.new) {
+            if (opp.Amount < 5000) {                
+                opp.addError('Opportunity amount must be greater than 5000');
+            }
+        }
+
+        // Question 7 solution
+        Set<Id> accIds = new Set<Id>();
+        for (Opportunity opp : Trigger.new) {
+            accIds.add(opp.AccountId);
+        }
+
+        Map<Id, Contact> conIdMap = new Map<Id, Contact>();
+        for (Contact contact : [SELECT Id, AccountId FROM Contact WHERE AccountId IN :accIds AND Title = 'CEO']) {
+            conIdMap.put(contact.AccountId, contact);
+        }
+        
+        for (Opportunity opp : Trigger.new) {
+            Contact ceoCon = conIdMap.get(opp.AccountId);
+            if (ceoCon != null) {
+                opp.Primary_Contact__c = ceoCon.Id;
+            }
+        }        
+    } 
 }
