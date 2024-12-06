@@ -1,32 +1,42 @@
 trigger AccountTrigger on Account (before insert, after insert) {
 
-    if (Trigger.isBefore && Trigger.isInsert) {     
-    
-        for (Account acc : Trigger.new) {
+    switch on Trigger.operationType {
+        when BEFORE_INSERT {
+            for (Account acc : Trigger.new) {
+                //Solution 1
+                if (acc.Type == null) {
+                    acc.Type = 'Prospect';
+                }
 
-            // Question 1 solution
-            if (acc.Type == null) { acc.Type = 'Prospect'; }
+                //Solution 2
+                acc.BillingStreet = acc.ShippingStreet ?? '';
+                acc.BillingCity = acc.ShippingCity ?? '';
+                acc.BillingState = acc.ShippingState ?? '';
+                acc.BillingPostalCode = acc.ShippingPostalCode ?? '';
+                acc.BillingCountry = acc.ShippingCountry ?? '';
 
-            // Question 2 solution
-            if (!String.isBlank(acc.ShippingStreet)) { acc.BillingStreet = acc.ShippingStreet; }
-            if (!String.isBlank(acc.ShippingCity)) { acc.BillingCity = acc.ShippingCity; }
-            if (!String.isBlank(acc.ShippingState)) { acc.BillingState = acc.ShippingState; }
-            if (!String.isBlank(acc.ShippingPostalCode)) { acc.BillingPostalCode = acc.ShippingPostalCode; }
-            if (!String.isBlank(acc.ShippingCountry)) { acc.BillingCountry = acc.ShippingCountry; }
-
-            // Question 3 solution
-            if (acc.Fax != null && acc.Phone != null && acc.Website != null) {acc.Rating = 'Hot'; }
+                //Solution 3
+                if (acc.Fax != null && acc.Phone != null && acc.Website != null) {
+                    acc.Rating = 'Hot'; 
+                }
+            }            
         }
-    } else if (trigger.isAfter && trigger.isInsert) {
-        // Question 4 solution
-        List<Contact> newContacts = new List<Contact>();
-        for (Account acc : Trigger.new) {
-            Contact con = new Contact();
-            con.LastName = 'DefaultContact';
-            con.Email = 'default@email.com';
-            con.AccountId = acc.Id;            
-            newContacts.add(con);
+        when AFTER_INSERT {
+            //Solution 4
+            List<Contact> contactsToInsert = new List<Contact>();
+            for (Account acc : Trigger.new) {
+                Contact con = new Contact();
+                con.LastName = 'DefaultContact';
+                con.Email = 'default@email.com';
+                con.AccountId = acc.Id;
+                contactsToInsert.add(con);
+            }
+            if (contactsToInsert.size() > 0) {
+                insert contactsToInsert;
+            }
         }
-        insert newContacts;
+        when else {
+            System.debug('AccountTrigger WHEN ELSE ACTIVATED');
+        }
     }
 }
